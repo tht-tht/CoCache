@@ -4,14 +4,14 @@
 
 ---
 
-## Prerequisites
+## Prerequisites
 
 - **OS**: Linux (Ubuntu 18.04+ recommended)
 - **Compiler**: GCC 9+ or Clang 10+
 - **Build Tools**: CMake 3.16+, Make
 - **Dependencies**: `librocksdb-dev`, `libsnappy-dev`, `libz-dev`, `libbz2-dev`, `liblz4-dev`
 
-## Install dependencies (Ubuntu/Debian)
+## Install dependencies (Ubuntu/Debian)
 
 ```
 sudo apt-get update
@@ -91,5 +91,5 @@ Database configurations are stored in `db_config.yaml`. Key parameters include:
 | `block_cache_size` | Total block cache size (bytes) | `1GB` |
 |     | ... |     |
 
-### Benchmark Workloads
+## Benchmark Workloads
 We primarily evaluate CoCache using YCSB-C (read-only workload), which is representative of read-intensive production scenarios. Additional workloads (YCSB-A, YCSB-F) are available in the workloads/ directory for sensitivity analysis.
