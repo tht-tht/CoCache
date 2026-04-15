@@ -6,7 +6,7 @@
 
 ## Prerequisites
 
-- **OS**: Linux (Ubuntu 20.04+ recommended)
+- **OS**: Linux (Ubuntu 18.04+ recommended)
 - **Compiler**: GCC 9+ or Clang 10+
 - **Build Tools**: CMake 3.16+, Make
 - **Dependencies**: `librocksdb-dev`, `libsnappy-dev`, `libz-dev`, `libbz2-dev`, `liblz4-dev`
