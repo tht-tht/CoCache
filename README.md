@@ -1,32 +1,85 @@
-## RocksDB: A Persistent Key-Value Store for Flash and RAM Storage
+# CoCache: Accelerating Reads in KV Stores via Cooperative Metadata and Data Cache Management
 
-[![CircleCI Status](https://circleci.com/gh/facebook/rocksdb.svg?style=svg)](https://circleci.com/gh/facebook/rocksdb)
-[![TravisCI Status](https://travis-ci.org/facebook/rocksdb.svg?branch=master)](https://travis-ci.org/facebook/rocksdb)
-[![Appveyor Build status](https://ci.appveyor.com/api/projects/status/fbgfu0so3afcno78/branch/master?svg=true)](https://ci.appveyor.com/project/Facebook/rocksdb/branch/master)
-[![PPC64le Build Status](http://140-211-168-68-openstack.osuosl.org:8080/buildStatus/icon?job=rocksdb&style=plastic)](http://140-211-168-68-openstack.osuosl.org:8080/job/rocksdb)
+**CoCache** is a high-performance key-value store optimized for read-intensive workloads built upon **RocksDB**.
 
-RocksDB is developed and maintained by Facebook Database Engineering Team.
-It is built on earlier work on [LevelDB](https://github.com/google/leveldb) by Sanjay Ghemawat (sanjay@google.com)
-and Jeff Dean (jeff@google.com)
+### Prerequisites
 
-This code is a library that forms the core building block for a fast
-key-value server, especially suited for storing data on flash drives.
-It has a Log-Structured-Merge-Database (LSM) design with flexible tradeoffs
-between Write-Amplification-Factor (WAF), Read-Amplification-Factor (RAF)
-and Space-Amplification-Factor (SAF). It has multi-threaded compactions,
-making it especially suitable for storing multiple terabytes of data in a
-single database.
+- **OS**: Linux (Ubuntu 18.04+ recommended)
+- **Compiler**: GCC 9+ or Clang 10+
+- **Build Tools**: CMake 3.16+, Make
+- **Dependencies**: `librocksdb-dev`, `libsnappy-dev`, `libz-dev`, `libbz2-dev`, `liblz4-dev`
 
-Start with example usage here: https://github.com/facebook/rocksdb/tree/master/examples
+```bash
+# Install dependencies (Ubuntu/Debian)
+sudo apt-get update
+sudo apt-get install -y cmake g++ libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev
+```
 
-See the [github wiki](https://github.com/facebook/rocksdb/wiki) for more explanation.
+### Build Instructions
 
-The public interface is in `include/`.  Callers should not include or
-rely on the details of any other header files in this package.  Those
-internal APIs may be changed without warning.
+1. **Clone the YCSB-C benchmark repository**:
+  
+  ```bash
+  git clone https://github.com/ZacharyLiu-CS/YCSB-C.git
+  cd YCSB-C
+  ```
+  
+2. **Replace the RocksDB implementation**:
+  
+  ```bash
+  # Copy CoCache source code to replace the original RocksDB implementation
+  cp -r /path/to/CoCache/* db_impl/rocksdb/
+  ```
+  
+3. **Build CoCache (RocksDB module)**:
+  
+  ```bash
+  cd db_impl/rocksdb
+  mkdir build && cd build
+  cmake .. -DCMAKE_BUILD_TYPE=Release
+  make -j 32
+  ```
+  
+4. **Build YCSB-C benchmark**:
+  
+  ```bash
+  cd ../../  # Back to YCSB-C root
+  mkdir build && cd build
+  cmake .. -DCMAKE_BUILD_TYPE=Release
+  make -j 32
+  ```
+  
 
-Design discussions are conducted in https://www.facebook.com/groups/rocksdb.dev/ and https://rocksdb.slack.com/
+### Running Experiments
 
-## License
+After successful compilation, run a basic experiment:
 
-RocksDB is dual-licensed under both the GPLv2 (found in the COPYING file in the root directory) and Apache 2.0 License (found in the LICENSE.Apache file in the root directory).  You may select, at your option, one of the above-listed licenses.
+```bash
+cd build
+./ycsbc -db rocksdb -dbpath . -P ../workloads/workloada.spec -threads 4
+```
+
+### Configuration
+
+#### Workload Parameters
+
+Workload configurations are stored in `workloads/`. Modify the following parameters in the `.spec` files:
+
+| Parameter | Description | Example |
+| --- | --- | --- |
+| `recordcount` | Number of KV pairs | `1000000` |
+| `operationcount` | Number of transactions | `1000000` |
+| `readproportion` / `writeproportion` | Read/Write ratio | `1.0` / `0.0` (YCSB-C) |
+| `requestdistribution` | Access distribution | `zipfian` or `uniform` |
+| `fieldlength` | Value size (bytes) | `128`, `256`, `512`, `1024` |
+
+#### Database Parameters
+
+Database configurations are stored in `db_config.yaml`. Key parameters include:
+
+| Parameter | Description | Default |
+| --- | --- | --- |
+| `memtable_size` | MemTable size (bytes) | `64MB` |
+| `sst_size` | SSTable size (bytes) | `64MB` |
+| `block_cache_size` | Total block cache size (bytes) | `4GB` |
+| `bloom_bits` | Bloom bits per key | `4` |
